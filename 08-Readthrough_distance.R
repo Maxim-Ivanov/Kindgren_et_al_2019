@@ -1,3 +1,8 @@
+# This script calculates read-through (RT) distance using plaNET-Seq, TSS-Seq and DR-Seq data;
+# Technically, it uses the sliding window approach and a statistical model which takes into account the variability of plaNET-Seq tag density in both the gene of interest and the intergenic intervals;
+# The RT tail was considered to extend from PAS to the position of the sliding window where the likelihood of observing at most this tag count under the "genic" model 
+# for the first time drops below the likelihood of observing at least this tag count under the "intergenic" model;
+# This file also contains the code required to reproduce Fig.2D;
 
 library(rtracklayer)
 library(SummarizedExperiment)
@@ -12,45 +17,11 @@ for (script in scripts) { source(file.path(r_dir, script)) }
 genes_araport_adj <- readRDS("genes_araport_adj.RDS")
 genes_npcd <- genes_araport_adj[mcols(genes_araport_adj)$tx_type == "mRNA" & seqnames(genes_araport_adj) %in% 1:5]
 
-## Call TSS-Seq clusters in hen2-2 samples
+## Load TSS clusters called from TSS-Seq data on hen2-2 samples (see 10-Call_TSS_and_PAS_clusters.R):
+tss <- rowRanges(readRDS("TSS_clusters_hen2-2.RDS"))
 
-# Load TSS-Seq hen2-2 data:
-tss_dir <- "." # change to the directory where you downloaded BigWig files for samples GSM3814858 and GSM3814859 (see GEO accession GSE131733)
-tss_data_fw <- batchReadTrackData(list.files(tss_dir, pattern = "Plus.bw$"), dir = tss_dir, format = "BigWig")
-strand(tss_data_fw) <- "+"
-tss_data_rev <- batchReadTrackData(list.files(tss_dir, pattern = "Minus.bw$"), dir = tss_dir, format = "BigWig")
-strand(tss_data_rev) <- "-"
-# Merge Fw and Rev files:
-tss_data <- mapply(function(x, y) { return(sort(c(x, y))) }, tss_data_fw, tss_rev, SIMPLIFY = FALSE)
-names(tss_data) <- c("hen2_rep1", "hen2_rep2")
-# Filter by minimal coverage:
-tss_data <- lapply(tss_data, function(gr) { return(gr[score(gr) >= 3]) })
-# Expand to unit width and save as BigWig (input requirements of CAGEfightR):
-tss_data_uw <- lapply(tss_data, expandGRtoUnitWidth)
-
-for (i in seq_along(tss_data_uw)) {
-  data <- tss_data_uw[[i]]
-  name <- names(tss_data_uw)[[i]]
-  export(data[strand(data) == "+"], paste0(name, "_unitWidth_Plus.bw"), format = "BigWig")
-  export(data[strand(data) == "-"], paste0(name, "_unitWidth_Minus.bw"), format = "BigWig")
-}
-
-# Call TSS-Seq clusters by CAGEfightR:
-bw_plus_filenames <- list.files(".", pattern = "unitWidth_Plus.bw$")
-bw_minus_filenames <- list.files(".", pattern = "unitWidth_Minus.bw$")
-bw_plus <- BigWigFileList(bw_plus_filenames)
-bw_minus <- BigWigFileList(bw_minus_filenames)
-sample_names <- sub("TSS-Seq_", "", sub("_unitWidth_Plus.bw", "", bw_plus_filenames))
-names(bw_plus) <- sample_names
-names(bw_minus) <- sample_names
-design_matrix <- data.frame("Name" = sample_names, "BigWigPlus" = bw_plus_filenames, "BigWigMinus" = bw_minus_filenames, row.names = sample_names, genotype = rep("hen2", 2))
-ctss <- quantifyCTSSs(plusStrand = bw_plus, minusStrand = bw_minus, design = design_matrix, genome = seqinfo(genes_araport_adj))
-tss <- quickTSSs(ctss) # n = 95994
-tss <- rowRanges(subsetBySupport(tss)) # n = 55645
-
-
-# Load PAS clusters called from DR-Seq data by CAGEfightR ###
-pas <- rowRanges(readRDS("DR-Seq_Col-0_cov2.RDS"))
+# Load PAS clusters called from DR-Seq data on WT samples (see 10-Call_TSS_and_PAS_clusters.R):
+pas <- rowRanges(readRDS("PAS_clusters_WT.RDS"))
 
 # Import plaNET data (raw counts):
 planet_dir <- "." # change to the directory containing merged plaNET-Seq Bedgraph files obtained from 02-Postprocessing_plaNET-Seq.R

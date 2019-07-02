@@ -1,3 +1,5 @@
+# This script was used to call differentially expressed genes in cold-treated samples on both plaNET-Seq and TSS-Seq data;
+# It also contains code for figures 3B, S1H and S3A-B
 
 library(DESeq2)
 library(rtracklayer)
@@ -134,7 +136,7 @@ for (ext in c(".png", ".pdf")) {
 ### Call differential expression on TSS-Seq data:
 
 # Load TSS-Seq BigWig files:
-tss_dir <- "." # change this to the directory where you downloaded BigWig files from https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE119304
+tss_dir <- "." # change to the directory where you downloaded all BigWig files from https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE119304 (Kindgren at al., 2018 - PMID 30385760)
 tss_data_fw <- batchReadTrackData(list.files(tss_dir, pattern = "Plus.bw$"), dir = tss_dir, format = "BigWig")
 strand(tss_data_fw) <- "+"
 tss_data_rev <- batchReadTrackData(list.files(tss_dir, pattern = "Minus.bw$"), dir = tss_dir, format = "BigWig")

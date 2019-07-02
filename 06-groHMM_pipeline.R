@@ -1,3 +1,5 @@
+# This script describes how transcripts were called de novo from the plaNET-Seq data;
+# It also allows to reproduce Figures 5B, 5D, 5E, 6B, 7B, 7D, S6B, S6C, S6G; 
 
 library(groHMM)
 options(mc.cores=getCores(4))
@@ -5,8 +7,8 @@ library(dplyr)
 library(rtracklayer)
 library(ggplot2)
 
-r_dir <- "." # # change to the folder where you saved the custom functions from https://github.com/Maxim-Ivanov/Kindgren_et_al_2019
-scripts <- c("batchReadTrackData.R", "getOverlappingScores.R", "myPoverlapsGRanges.R", "parallelOverlapType.R", "normalizeGR.R", "annotateNoncodingTranscripts.R")
+r_dir <- "." # change to the folder where you saved the custom functions from https://github.com/Maxim-Ivanov/Kindgren_et_al_2019
+scripts <- c("batchReadTrackData.R", "getOverlappingScores.R", "poverlapsGRanges.R", "parallelOverlapType.R", "normalizeGR.R", "annotateNoncodingTranscripts.R")
 for (script in scripts) { source(file.path(r_dir, script)) }
 
 # Load adjusted Araport11 genes (see 04-Adjustment_Araport11.R for details):
@@ -20,8 +22,6 @@ strand(genes_AS) <- ifelse(strand(genes_AS) == "+", "-", "+")
 txdb_araport <- makeTxDbFromGFF("Araport11_GFF3_genes_transposons.201606.gff.gz")
 ebg_araport <- exonsBy(txdb_araport, by = "gene") # exons grouped by gene
 seqinfo(ebg_araport, new2old = as.integer(c(1:5, 7, 6))) <- seqinfo(genes_araport_adj)
-#exons <- unlist(ebg_araport)
-#ebg_npcd <- ebg_araport[names(ebg_araport) %in% names(genes_npcd)] # exons in nuclear protein-coding genes
 
 # Extract protein-coding genes (for normalization of plaNET-Seq tracks):
 genes_npcd <- genes_araport_adj[mcols(genes_araport_adj)$tx_type == "mRNA" & seqnames(genes_araport_adj) %in% 1:5] # nuclear protein-coding genes
@@ -112,6 +112,7 @@ seqinfo(merged) <- seqinfo(genes_araport_adj)
 
 # Export merged groHMM transcripts as BED file:
 export(merged, "GroHMM_transcripts_merged_across_samples.bed", format = "BED")
+saveRDS(merged, "GroHMM_transcripts_merged_across_samples.RDS")
 
 # Calculate some useful statistics:
 # 1) Number of samples where the transcript was called ("positive" samples):
@@ -251,7 +252,7 @@ mcols(novel)$Subint <- skipSubintervals(novel) # FALSE for intervals which are n
 
 # Export novel transcripts as BED file:
 export(novel, "Novel_groHMM_transcripts.bed", format = "BED")
-
+saveRDS(novel, "Novel_groHMM_transcripts.RDS")
 
 ##### Fig. 5B: classification of novel transcripts and known genes #####
 
@@ -414,7 +415,7 @@ first_exons_par <- first_exons[df$idx_first]
 second_exons_par <- second_exons[df$idx_second]
 # Plot histogram of distances between casTSS and end of the first exon:
 first_exon_gap <- pgap(as_flipped_tss_conv_ex, resize(first_exons_par, 1, "end"))
-abs_from_first_exon <- ifelse(myPoverlapsGRanges(flank(first_exon_gap, 1), as_flipped_tss_conv_ex) & width(first_exon_gap) > 0, -width(first_exon_gap), width(first_exon_gap))
+abs_from_first_exon <- ifelse(poverlapsGRanges(flank(first_exon_gap, 1), as_flipped_tss_conv_ex) & width(first_exon_gap) > 0, -width(first_exon_gap), width(first_exon_gap))
 ttl <- "Absolute distance between casTSS and end of the first exon"
 p <- ggplot(data.frame("Dist" = abs_from_first_exon), aes(x = Dist)) + geom_histogram(bins = 100) + 
   ggtitle(ttl) + xlab("Distance from exon end, bp") + ylab("Number of transcripts")
@@ -423,7 +424,7 @@ for (ext in c("pdf", "png")) {
 }
 # Plot histogram of distances between casTSS and end of the second exon:
 second_exon_gap <- pgap(as_flipped_tss_conv_ex, resize(second_exons_par, 1, "end"))
-abs_from_second_exon <- ifelse(myPoverlapsGRanges(flank(second_exon_gap, 1), as_flipped_tss_conv_ex) & width(second_exon_gap) > 0, -width(second_exon_gap), width(second_exon_gap))
+abs_from_second_exon <- ifelse(poverlapsGRanges(flank(second_exon_gap, 1), as_flipped_tss_conv_ex) & width(second_exon_gap) > 0, -width(second_exon_gap), width(second_exon_gap))
 ttl <- "Absolute distance between casTSS and end of the second exon"
 p <- ggplot(data.frame("Dist" = abs_from_second_exon), aes(x = Dist)) + geom_histogram(bins = 100) + 
   ggtitle(ttl) + xlab("Distance from exon end, bp") + ylab("Number of transcripts")

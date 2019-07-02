@@ -1,13 +1,13 @@
 # This script adjusts borders of Araport11 genes using data from TIF-Seq, TSS-Seq and DR-Seq experiments;
+# The idea is to to find the strongest TSS and PAS for each gene. The TIF-Seq data are used to detect functional connections between known genes and the nearby TSS/PAS clusters;
 # TIF-Seq, or Transcript Isoform Sequencing, was originally developed by Pelechano et al., 2014 (PMID 24967623) in budding yeast;
 # This method allows for simultaneous mapping of 5' and 3'-ends of the same RNA molecule (capped and polyadenylated);
-# I.e first bases of read 1 and read 2 in paired-end sequencing denote borders of the transcript isoform (both TSS and PAS);
+# I.e. first bases of read 1 and read 2 in paired-end sequencing denote borders of the transcript isoform (both TSS and PAS);
 # Recently, we for the first time applied TIF-Seq to Arabidopsis Col-0 seedlings (manuscript co-submitted);
 # TSS-Seq is a simplification of TIF-Seq protocol which resolves only 5'-ends of polyadenylated transcripts. In effect, it is similar to CAGE;
-# Our TSS-Seq dataset for Col-0 seedlings was published in Nielsen et al., 2019 (PMID 30707695) and can be downloaded from GSE113677;
+# Our TSS-Seq dataset for Col-0 WT seedlings was published in Nielsen et al., 2019 (PMID 30707695) and can be downloaded from GSE113677;
 # DR-Seq, or Direct RNA sequencing, allows to resolve PAS sites;
 # We combined DR-Seq datasets from Schurch et al., 2014 (PMID 24722185) and Sherstnev et al., 2012 (PMID 22820990), as detailed in 03-Alignment_GRO-Seq_RNA-Seq_DR-Seq.sh;
-
 
 min_tif_score <- 2 # use TIF-Seq clusters with at least 2 supporting read pairs
 min_tss_score <- 5 # use TSS-Seq clusters with the score at least 5
@@ -47,18 +47,18 @@ max_ext <- granges(suppressWarnings(trim(resize(genes, width = width(genes) + ma
 mcols(genes)$up <- pgap(resize(max_ext, width = 0, fix = "start"), mcols(genes)$cds)
 mcols(genes)$down <- pgap(mcols(genes)$cds, resize(max_ext, width = 0, fix = "end"))
 
-# Load TIF-Seq data:
+# Load TIF-Seq clusters:
 tif <- import("TIF-Seq_clusters_WT.bed", format = "BED", seqinfo = seqinfo(txdb_tair))
 mcols(tif)$score <- as.integer(mcols(tif)$name)
 mcols(tif)$name <- NULL
 tif <- tif[mcols(tif)$score >= min_tif_score]
 
-# Load TSS-Seq data (see Nielsen et al., 2019 - PMID 30707695 for details on TSS-Seq data processing and cluster calling by CAGEfightR):
-tss <- rowRanges(readRDS("TSS-Seq_Col-0.RDS"))
+# Load TSS clusters called from TSS-Seq data on WT samples (see 10-Call_TSS_and_PAS_clusters.R):
+tss <- rowRanges(readRDS("TSS_clusters_WT.RDS"))
 tss <- tss[mcols(tss)$score >= min_tss_score]
 
-# Load PAS data from DR-Seq (DR-Seq clusters were called by CAGEfightR in the same way as TSS-Seq data; see Nielsen et al., 2019 for details):
-pas <- rowRanges(readRDS("DR-Seq_Col-0_cov2.RDS"))
+# Load PAS clusters called from DR-Seq data on WT samples (see 10-Call_TSS_and_PAS_clusters.R):
+pas <- rowRanges(readRDS("PAS_clusters_WT.RDS"))
 pas <- pas[mcols(pas)$score >= min_pas_score]
 
 # Skip intergenic TIF-Seq clusters which do not overlap any gene:

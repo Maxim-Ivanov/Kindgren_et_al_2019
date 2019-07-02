@@ -1,4 +1,6 @@
 ### The following code allows to reproduce all metagene plots which were included into the paper
+# (Figures 2A, 2C, 3C-D, 4D, 4F-G, 6C, 6D, 7C, 7E)
+# (Supplementary Figures S2A-C, S4C, S4E-F, S5A-D, S6A, S6E, S6F)
 
 library(rtracklayer)
 library(ggplot2)
@@ -22,7 +24,7 @@ ebg_npcd <- ebg_araport[names(ebg_araport) %in% names(genes_npcd)] # exons in nu
 #exons_npcd <- unlist(ebg_npcd)
 
 # Load custom functions:
-r_dir <- "D:/SCIENCE-4/My R scripts"
+r_dir <- "." # change to the folder where you saved the custom functions from https://github.com/Maxim-Ivanov/Kindgren_et_al_2019
 scripts <- c("batchReadTrackData.R", "metageneMatrix.R", "drawMetagenePlot.R", "normalizeGR.R", "removeFirstAndLastExons.R", 
              "mergeBedgraphs.R", "findFirstNucleosome.R", "findMatchedControl.R", "getOverlappingScores.R")
 for (script in scripts) { source(file.path(r_dir, script)) }
@@ -33,6 +35,7 @@ planet_files <- list.files(planet_dir, pattern = "merged_fw_rev.bedgraph.gz$")
 planet_data <- batchReadTrackData(planet_files, dir = planet_dir, format = "bedGraph", seqinfo = seqinfo(genes_araport_adj))
 names(planet_data) <- paste0("plaNET_", sub("_merged_fw_rev.bedgraph.gz", "", names(planet_data)))
 planet_data <- endoapply(planet_data, normalizeGR, by = genes_npcd_m) # normalize track to 1M tags in nuclear protein-coding genes
+saveRDS(planet_data, "PlaNET-Seq_data_norm1M.RDS") # will be used later in 09-Stalling_index.R
 
 # Load and normalize the remapped pNET-Seq data (merged replicates):
 pnet_dir <- "." # change to the relevant directory
