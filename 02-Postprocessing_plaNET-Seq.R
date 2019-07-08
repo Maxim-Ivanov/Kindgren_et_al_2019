@@ -1,3 +1,8 @@
+# This code was used to filter BAM files produced by https://github.com/Maxim-Ivanov/Kindgren_et_al_2019/01-Alignment_plaNET-Seq.sh
+# It returns Bedgraph files which are used by the downstream scripts in this study;
+# It also returns strand-specific BigWig files which were uploaded to GEO;
+# Moreover, it allows to reproduce Fig. S1D;
+
 library(GenomicAlignments)
 library(dplyr)
 library(TxDb.Athaliana.BioMart.plantsmart28)
@@ -12,7 +17,8 @@ library(BSgenome.Athaliana.TAIR.TAIR9)
 bs <- BSgenome.Athaliana.TAIR.TAIR9
 seqlevels(bs) <- seqlevels(txdb)
 
-scripts <- c("convertGAlignmentsToCoverage.R", "saveGRangesAsBedGraph.R", "mergeBedgraphs.R", "loadNETSeqBAM.R", "removeFirstAndLastExons.R")
+scripts <- c("convertGAlignmentsToCoverage.R", "saveGRangesAsBedGraph.R", "mergeBedgraphs.R", "loadNETSeqBAM.R", 
+             "removeFirstAndLastExons.R", "getOverlappingScores.R", "normalizeGR.R")
 for (script in scripts) { source(script) }
 
 findSpliceSites <- function(ebg) {
@@ -64,4 +70,37 @@ for (i in seq_along(bg_files)) {
   gr_rev <- sort(gr[strand(gr) == "-"])
   export(gr_fw, sub(".bedgraph.gz", "_Plus.bw", bg), format = "BigWig")
   export(gr_rev, sub(".bedgraph.gz", "_Minus.bw", bg), format = "BigWig")
+}
+
+# Draw scatterplot of reproducibility between biological replicates (Fig. S1D):
+all_tiles <- tileGenome(seqinfo(txdb), tilewidth = 10, cut.last.tile.in.chrom = TRUE)
+
+rep1 <- list.files(bamdir, pattern = "biorep1.*bedgraph.gz$")
+rep2 <- sub("biorep1", "biorep2", rep1)
+data_rep1 <- batchReadTrackData(rep1, dir = bamdir, format = "bedGraph", seqinfo  = seqinfo(txdb))
+data_rep2 <- batchReadTrackData(rep2, dir = bamdir, format = "bedGraph", seqinfo  = seqinfo(txdb))
+
+genes <- genes(txdb, columns = c("gene_id", "tx_type"))
+mcols(genes)$tx_type <- unname(unlist(mcols(genes)$tx_type))
+genes_npcd <- genes[mcols(genes)$tx_type == "protein_coding" & seqnames(genes) %in% 1:5] # nuclear protein-coding genes in Plantsmart28
+genes_npcd_ext <- suppressWarnings(trim(resize(genes_npcd, width(genes_npcd) + 100, "end")))
+genes_npcd_ext <- suppressWarnings(trim(resize(genes_npcd_ext, width(genes_npcd_ext) + 500, "start")))
+genes_npcd_m <- reduce(genes_npcd_ext)
+
+data_rep1 <- endoapply(data_rep1, normalizeGR, by = genes_npcd_m) # normalize track to 1M tags in extended nuclear protein-coding genes
+data_rep2 <- endoapply(data_rep2, normalizeGR, by = genes_npcd_m)
+
+for (i in seq_along(rep1)) {
+  data <- list(data_rep1[[i]], data_rep2[[i]])
+  names(data) <- c(rep1[[i]], rep2[[i]])
+  mat <- getOverlappingScores(all_tiles, data, value = "count_matrix")
+  mat <- mat[mat[, 1] > 0 & mat[, 2] > 0, ]
+  df <- as.data.frame(mat)
+  s1 <- names(df)[[1]]
+  s2 <- names(df)[[2]]
+  r <- round(cor(df[, 1], df[, 2], method = "pearson"), 3)
+  ttl <- paste0("Technical reproducibility ", sub(".bedgraph.gz", "", s1), " vs ", sub(".bedgraph.gz", "", s2), " (10 bp windows, all genes)")
+  p <- ggplot(df, aes(x = eval(parse(text = s1)), y = eval(parse(text = s2)))) + geom_point(shape = 19, size = 1.5, alpha = 0.01) + 
+    ggtitle(paste0("Pearson r = ", r)) + xlab(s1) + ylab(s2) + xlim(0, 50) + ylim(0, 50)
+  for (ext in c(".pdf", ".png")) { ggsave(paste0(ttl, ext), plot = p, width = 7, height = 7, units = "in") }
 }

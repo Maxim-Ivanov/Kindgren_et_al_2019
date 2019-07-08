@@ -1,5 +1,5 @@
 # This script was used to call differentially expressed genes in cold-treated samples on both plaNET-Seq and TSS-Seq data;
-# It also contains code for figures 3B, S1H and S3A-B
+# It also contains code to reproduce figures 4c and S5a-b;
 
 library(DESeq2)
 library(rtracklayer)
@@ -66,7 +66,7 @@ saveRDS(genes_de, "genes_de.RDS")
 novel_de <- deseq_pipeline(novel_se)
 saveRDS(novel_de, "novel_de.RDS")
 
-### Fig. 3B and S3B (number of exons in DE genes):
+### Fig. S5B (number of exons in DE genes):
 
 # Extract exon numbering within each gene:
 ebg <- exonsBy(txdb, by = "gene")
@@ -109,7 +109,7 @@ long_df$Exon_count <- as.integer(long_df$Exon_count)
 long_df$Contrast <- factor(long_df$Contrast)
 long_df$DE <- factor(long_df$DE)
 
-ttl <- "Exon counts in DE genes"
+ttl <- "Exon counts in DE genes (Fig. S5b)"
 p <- ggplot(long_df, aes(x = Exon_count, y = N_genes, fill = DE)) + 
   geom_bar(stat = "identity", position = position_dodge(0.7), width = 0.5) + 
   facet_grid(Contrast ~ .) + ggtitle(ttl)
@@ -118,7 +118,7 @@ for (ext in c(".png", ".pdf")) {
 }
 
 
-### Fig. S3A (length of Cold DE genes):
+### Fig. S5a (length of Cold DE genes):
 
 out <- vector("list", length(de_cols))
 for (i in seq_along(de_cols)) {
@@ -130,7 +130,7 @@ results <- do.call(rbind, out)
 
 p <- ggplot(results, aes(x = DE, y = Length)) + geom_boxplot(outlier.colour = NA) + ylim(0, 6000) + facet_grid(. ~ Group)
 for (ext in c(".png", ".pdf")) {
-  ggsave(paste0("Length_of_DE_genes", ext), plot = p, width = 12, height = 8, units = "in")
+  ggsave(paste0("Length of DE genes (Fig. S5a)", ext), plot = p, width = 12, height = 8, units = "in")
 }
 
 ### Call differential expression on TSS-Seq data:
@@ -171,7 +171,7 @@ tss_deseq_pipeline <- function(se) {
 
 genes_tss_decisions <- tss_deseq_pipeline(genes_tss_se)
 
-# Fig. S1H (compare DE decisions for the same genes on plaNET-Seq vs TSS-Seq data):
+# Fig. 4c (comparison of DE decisions for the same genes on plaNET-Seq vs TSS-Seq data):
 table(mcols(genes_de)$Cold_3h_vs_WT_de, genes3_tss_decisions)
 
 

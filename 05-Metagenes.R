@@ -1,27 +1,25 @@
 ### The following code allows to reproduce all metagene plots which were included into the paper
-# (Figures 2A, 2C, 3C-D, 4D, 4F-G, 6C, 6D, 7C, 7E)
-# (Supplementary Figures S2A-C, S4C, S4E-F, S5A-D, S6A, S6E, S6F)
+# (Fig. 2e, 3e, 5a-c, 6g-i, 7b-e, 8a, 8c, S2a-b, S3b-c, S6a-b, S6d-f)
 
 library(rtracklayer)
 library(ggplot2)
 set.seed(42)
 
-# Load adjusted Araport11 genes (see 04-Adjustment_Araport11.R for details):
-genes_araport_adj <- readRDS("genes_araport_adj.RDS")
+# Load adjusted Araport11 genes:
+genes_araport_adj <- readRDS("genes_araport_adj.RDS") # see 04-Adjustment_Araport11.R
 
-# Extract protein-coding genes (for normalization of plaNET-Seq and other tracks):
+# Extract nuclear protein-coding genes (for normalization of plaNET-Seq and other tracks):
 genes_npcd <- genes_araport_adj[mcols(genes_araport_adj)$tx_type == "mRNA" & seqnames(genes_araport_adj) %in% 1:5] # nuclear protein-coding genes
 genes_npcd_ext <- suppressWarnings(trim(resize(genes_npcd, width(genes_npcd) + 100, "end"))) # extend by 100 bp upstream
 genes_npcd_ext <- suppressWarnings(trim(resize(genes_npcd_ext, width(genes_npcd_ext) + 500, "start")))  # extend by 500 bp downstream to capture pA peaks in plaNET-Seq data
 genes_npcd_m <- reduce(genes_npcd_ext) # merge overlapping intervals
 
 # Load the original Araport11 annotation:
-txdb_araport <- makeTxDbFromGFF("Araport11_GFF3_genes_transposons.201606.gff.gz")
+txdb_araport <- makeTxDbFromGFF("Araport11_GFF3_genes_transposons.201606.gff.gz") # https://www.arabidopsis.org/download_files/Genes/Araport11_genome_release/Araport11_GFF3_genes_transposons.201606.gff.gz
 ebg_araport <- exonsBy(txdb_araport, by = "gene") # exons grouped by gene
 seqinfo(ebg_araport, new2old = as.integer(c(1:5, 7, 6))) <- seqinfo(genes_araport_adj)
 exons <- unlist(ebg_araport)
 ebg_npcd <- ebg_araport[names(ebg_araport) %in% names(genes_npcd)] # exons in nuclear protein-coding genes
-#exons_npcd <- unlist(ebg_npcd)
 
 # Load custom functions:
 r_dir <- "." # change to the folder where you saved the custom functions from https://github.com/Maxim-Ivanov/Kindgren_et_al_2019
@@ -104,7 +102,8 @@ nps_first_500 <- suppressWarnings(trim(resize(nps_first, 1000, "center"))) # mak
 nps_first_500_filt <- nps_first_500[width(nps_first_500) == 1000 & countOverlaps(nps_first_500, genes_araport_adjust) == 1]
 
 ########## DRAW METAGENE PLOTS OF PLANET-SEQ AND PNET-SEQ TRACKS AT TSS, FIRST NUCLEOSOMES, PAS, INTERNAL EXONS AND INTRONS ##########
-# (for Fig. 2A, 2C, 3C-D, 4D, S2A-C, S4C)
+# (for Fig. 6g-i, 8a, 8c, S6a-b, S6f)
+# (observe that the final figures 6g-i show only the last 50% of scaled introns)
 
 all_intervals <- list(list(tss_500_filt, "TSS 500 bp", TRUE, 200, "Window (1 Kb) centered at TSS (5 bp bins)", TRUE),
                       list(pas_500_filt, "PAS 500 bp", TRUE, 200, "Window (1 Kb) centered at PAS (5 bp bins)", TRUE),
@@ -116,7 +115,6 @@ all_intervals <- list(list(tss_500_filt, "TSS 500 bp", TRUE, 200, "Window (1 Kb)
 # Change indexes in square brackets according to the order of samples in your planet_data and pnet_data lists:
 all_data <- list(c("planet_data[1]", "PlaNET WT"),
                  c("planet_data[1:3]", "PlaNET WT Cold"),
-                 c("planet_data[c(1, 4)]", "PlaNET WT Fas2"),
                  c("planet_data[c(5, 6)]", "PlaNET DMSO PlaB"),
                  c("pnet_data", "pNET Ab"))
 
@@ -152,7 +150,7 @@ for (i in seq_along(all_data)) {
 
 ########## DRAW METAGENE PLOTS OF SHORT VS LONG INTRONS ##########
 
-# 1) Nucleosome occupancy of introns stratified by length (Fig. S4E):
+# 1) Nucleosome occupancy of introns stratified by length (Fig. S6d):
 introns_min25 <- introns[width(introns) >= 25] 
 breaks = c(60, 150, 250, 500, 1000)
 groups <- cut(width(introns_min25), breaks = breaks)
@@ -172,24 +170,24 @@ names(ml) <- paste0(lvl, " (n=", lapply(ml, nrow), ")")
 drawMetagenePlot(ml, title = "Introns grouped by width - Nucleosome occupancy", xlabel = "Introns scaled to 300 bins", 
                  ylabel = "Nucleosome occupancy", width = 8, height = 8, units = "in")
 
-# 2) plaNET-Seq and pNET-Seq profiles of the first 200 bp of short vs long introns (Fig. 4F-G):
+# 2) plaNET-Seq and pNET-Seq profiles of the first 200 bp of short vs long introns (Fig. 7b-e):
 introns_60_250 <- introns_filt[mcols(introns_filt)$groups %in% lvl[2:3]] # "(60,150]" and "(150,250]"
 introns_250_1000 <- introns_filt[mcols(introns_filt)$groups %in% lvl[4:5]] # "(250,500]" and "(500,1e+03]"
 
 matlist <- lapply(planet_data[c(5, 6)], metageneMatrix, intervals = introns_60_250, skip.zeros = FALSE, scaling = FALSE, matrix.length = 200)
-drawMetagenePlot(matlist, title = paste0("Short introns unscaled (first 200bp) (n=", nrow(matlist[[1]]), ") PlaNET DMSO PlaB"), 
+drawMetagenePlot(matlist, title = paste0("Short introns unscaled (first 200bp) (n=", nrow(matlist[[1]]), ") PlaNET DMSO PlaB (Fig. 7b)"), 
                  xlabel = "Introns 60-250bp unscaled (trimmed to 200bp) anchored at start", ylim = c(0, NA), width = 8, height = 8, units = "in")
 matlist <- lapply(planet_data[c(5, 6)], metageneMatrix, intervals = introns_250_1000, skip.zeros = FALSE, scaling = FALSE, matrix.length = 200)
-drawMetagenePlot(matlist, title = paste0("Long introns unscaled (first 200bp) (n=", nrow(matlist[[1]]), ") PlaNET DMSO PlaB"), 
+drawMetagenePlot(matlist, title = paste0("Long introns unscaled (first 200bp) (n=", nrow(matlist[[1]]), ") PlaNET DMSO PlaB (Fig. 7c)"), 
                  xlabel = "Introns 250-1000bp unscaled (trimmed to 200bp) anchored at start", ylim = c(0, NA), width = 8, height = 8, units = "in")
-matlist <- lapply(pnet_data, metageneMatrix, intervals = introns_60_250, skip.zeros = FALSE, scaling = FALSE, matrix.length = 200)
-drawMetagenePlot(matlist, title = paste0("Short introns unscaled (first 200bp) (n=", nrow(matlist[[1]]), ") pNET Ab"), 
+matlist <- lapply(planet_data[1:3], metageneMatrix, intervals = introns_60_250, skip.zeros = FALSE, scaling = FALSE, matrix.length = 200)
+drawMetagenePlot(matlist, title = paste0("Short introns unscaled (first 200bp) (n=", nrow(matlist[[1]]), ") plaNET WT vs Cold (Fig. 7d)"), 
                  xlabel = "Introns 60-250bp unscaled (trimmed to 200bp) anchored at start", ylim = c(0, NA), width = 8, height = 8, units = "in")
-matlist <- lapply(pnet_data, metageneMatrix, intervals = introns_250_1000, skip.zeros = FALSE, scaling = FALSE, matrix.length = 200)
-drawMetagenePlot(matlist, title = paste0("Long introns unscaled (first 200bp) (n=", nrow(matlist[[1]]), ") pNET Ab"), 
+matlist <- lapply(planet_data[1:3], metageneMatrix, intervals = introns_250_1000, skip.zeros = FALSE, scaling = FALSE, matrix.length = 200)
+drawMetagenePlot(matlist, title = paste0("Long introns unscaled (first 200bp) (n=", nrow(matlist[[1]]), ") plaNET WT vs Cold (Fig. 7e)"), 
                  xlabel = "Introns 250-1000bp unscaled (trimmed to 200bp) anchored at start", ylim = c(0, NA), width = 8, height = 8, units = "in")
 
-# 3) PlaNET-Seq profile of matched pairs of long and short introns (Fig. S4F):
+# 3) PlaNET-Seq profile of matched pairs of long and short introns (Fig. S6e):
 # Find pairs of long-short introns matched by transcription (for each long intron, pick up a short intron from the same gene):
 introns_500_1000 <- introns_filt[mcols(introns_filt)$groups == lvl[[5]]]
 introns_60_500 <- introns_filt[mcols(introns_filt)$groups %in% lvl[2:4]] # introns 60-500 bp are considered "short"
@@ -211,7 +209,7 @@ mat2 <- metageneMatrix(signal = planet_data[[1]], intervals = matched_introns_60
                        skip.zeros = FALSE, skip.top.obs = TRUE, shrink = TRUE)
 mat2_ext <- cbind(mat2, matrix(nrow = nrow(mat2), ncol = (800 - 300) / 5))
 ml <- list("Long introns (500-1000 bp)" = mat1, "Matched short introns (60-500 bp)" = mat2_ext)
-drawMetagenePlot(ml, title = "Unscaled matched introns grouped by width - plaNET WT", xlabel = "Unscaled introns (5 bp bins) anchored as 5pSS", 
+drawMetagenePlot(ml, title = "Unscaled matched introns grouped by width - plaNET WT (Fig. S6e)", xlabel = "Unscaled introns (5 bp bins) anchored as 5pSS", 
                  ylabel = "PlaNET-Seq WT", width = 10, height = 7, units = "in")
 
 
@@ -235,7 +233,7 @@ dupl <- duplicated(names(mate_genes))
 dnc <- dnc[!dupl]
 mate_genes <- mate_genes[!dupl]
 
-# 1) Nucleosome occupancy in the gap between DNC TSS and mate gene TSS (Fig. 6D):
+# 1) Nucleosome occupancy in the gap between DNC TSS and mate gene TSS (Fig. S2b):
 between <- pgap(mate_genes, dnc, ignore.strand = TRUE) # gap has the same strandness as mate genes
 win_up <- flank(between, 250)
 win_down <- flank(between, 250, start = FALSE)
@@ -243,10 +241,10 @@ m1 <- metageneMatrix(signal = nucl_data[[1]], intervals = win_up, scaling = TRUE
 m2 <- metageneMatrix(signal = nucl_data[[1]], intervals = between, scaling = TRUE, matrix.length = 50, skip.zeros = FALSE, skip.outliers = FALSE)
 m3 <- metageneMatrix(signal = nucl_data[[1]], intervals = win_down, scaling = TRUE, matrix.length = 50, skip.zeros = FALSE, skip.outliers = FALSE)
 matlist <- list("MNase-Seq_PlantDHS" = cbind(m1, m2, m3))
-drawMetagenePlot(matlist, x.axis = seq(-49, 100), title = "Nucleosome occupancy between DNC TSS and mate gene TSS", 
+drawMetagenePlot(matlist, x.axis = seq(-49, 100), title = "Nucleosome occupancy between DNC TSS and mate gene TSS (Fig. S2b)", 
                  xlabel = "Gaps scaled to 50 bins with 250 bp flanks (5 bp bins)", vline = c(0, 50), width = 8, height = 8, units = "in")
 
-# 2) Nucleosome occupancy of DNC promoters vs matched non-DNC promoters (Fig. 6C):
+# 2) Nucleosome occupancy of DNC promoters vs matched non-DNC promoters (Fig. S2a):
 # Calculate FPKM transcription values of: i) mate genes; ii) all nuclear protein-coding genes:
 mate_genes_fpkm <- as.numeric(getOverlappingScores(mate_genes, planet_data[1], value = "count_matrix")) / width(mate_genes) * 1000
 genes_npcd_fpkm <- as.numeric(getOverlappingScores(genes_npcd, planet_data[1], value = "count_matrix")) / width(genes_npcd) * 1000
@@ -258,43 +256,29 @@ win_matched <- resize(resize(granges(matched), 500, "start"), 1500, "end")
 mat1 <- metageneMatrix(signal = nucl_data[[1]], intervals = win_mate, scaling = TRUE, matrix.length = 300, skip.zeros = FALSE)
 mat2 <- metageneMatrix(signal = nucl_data[[1]], intervals = win_matched, scaling = TRUE, matrix.length = 300, skip.zeros = FALSE)
 matlist <- list("Mate genes" = mat1, "Matched non-DNC genes" = mat2)
-drawMetagenePlot(matlist, x.axis = seq(-199, 100), title = "Nucleosome occupancy at gene TSS", 
+drawMetagenePlot(matlist, x.axis = seq(-199, 100), title = "Nucleosome occupancy at gene TSS (Fig. S2a)", 
                  xlabel = "1Kb upstream + 0.5Kb downstream from gene TSS (5 bp bins)", vline = 0, width = 8, height = 8, units = "in")
 
-# 3) Draw pNET-Seq, GRO-Seq, TSS-Seq (WT and hen2-2) and plaNET-Seq (WT vs fas2-4) profiles around divTSS (Fig. S5A-D):
+# 3) Draw TSS-Seq profile (WT vs hen2-2) around divTSS on the antisense strand (Fig. 2e):
 windows <- resize(resize(dnc, 0, "start"), 1000, "center")
 win_flipped <- granges(windows)
-strand(win_flipped) <- ifelse(strand(win_flipped) == "+", "-", "+")
+strand(win_flipped) <- ifelse(strand(win_flipped) == "+", "-", "+") # flip windows to the sense (coding) strand
+matlist_as <- lapply(tss_data, metageneMatrix, intervals = win_flipped, scaling = TRUE, matrix.length = 200, skip.zeros = FALSE, antisenseMode = TRUE)
+matlist_as <- lapply(matlist_as, function(mat) { return(-mat) })
+drawMetagenePlot(matlist_as, x.axis = seq(-99, 100), vline = 0, title = "DNC - TSS-Seq WT vs hen2-2 (AS strand)", 
+                 xlabel = "1Kb windows centered at DNC TSS (5 bp bins)", width = 8, height = 8, units = "in", hline = 0)
 
-cases <- list("Nucleosome occupancy" = list("nucl_data", FALSE),
-              "GRO-Seq" = list("gro_data", TRUE),
-              "TSS-Seq WT hen2" = list("tss_data", TRUE),
-              "PlaNET-Seq WT Fas2" = list("planet_data[c(1, 4)]", TRUE),
-              "pNET-Seq" = list("pnet_data", TRUE))
-
-xlab = "1Kb windows centered at DNC TSS (5 bp bins)"
-
-for (i in seq_along(cases)) {
-  curr_name <- names(cases)[[i]]
-  curr_data <- eval(parse(text = cases[[i]][[1]]))
-  curr_as <- cases[[i]][[2]] # antisenseMode parameter for metageneMatrix() function (TRUE/FALSE) 
-  matlist_s <- lapply(curr_data, metageneMatrix, intervals = win_flipped, scaling = TRUE, matrix.length = 200, skip.zeros = FALSE)
-  drawMetagenePlot(matlist_s, x.axis = seq(-99, 100), vline = 0, title = paste0("DNC - ", curr_name, " (Fw)"), 
-                   xlabel = xlab, width = 8, height = 8, units = "in")
-  if (isTRUE(curr_as)) {
-    matlist_as <- lapply(curr_data, metageneMatrix, intervals = win_flipped, scaling = TRUE, matrix.length = 200, skip.zeros = FALSE, antisenseMode = TRUE)
-    matlist_as <- lapply(matlist_as, function(mat) { return(-mat) })
-    drawMetagenePlot(matlist_as, x.axis = seq(-99, 100), vline = 0, title = paste0("DNC - ", curr_name, " (Rev)"), 
-                     xlabel = xlab, width = 8, height = 8, units = "in", hline = 0)
-  }
-}
+# 4) Draw plaNET-Seq profile (WT vs Cold_3h vs Cold_12h) around divTSS on the antisense strand (Fig. 5a):
+matlist_as <- lapply(planet_data[1:3], metageneMatrix, intervals = win_flipped, scaling = TRUE, matrix.length = 200, skip.zeros = FALSE, antisenseMode = TRUE)
+matlist_as <- lapply(matlist_as, function(mat) { return(-mat) })
+drawMetagenePlot(matlist_as, x.axis = seq(-99, 100), vline = 0, title = "DNC - plaNET-Seq WT vs Cold (AS strand) (Fig. 5a)", 
+                 xlabel = "1Kb windows centered at DNC TSS (5 bp bins)", width = 8, height = 8, units = "in", hline = 0)
 
 
 ########## DRAW METAGENE PLOTS OF CONVERGENT PROMOTERS ##########
-# Nucleosome occupancy at casTSS (Fig. 7C);
-# PlaNET-Seq signal (WT vs Cold 3h vs Cold 12h) at casTSS on both sense and antisense strands (Fig. 7E);
-# pNET-Seq signal at casTSS on the antisense strand (Fig. S6A);
-# TSS-Seq signal (WT vs hen2-2) at casTSS on the antisense strand (Fig. S6F);
+# Nucleosome occupancy at casTSS (Fig. S3b);
+# PlaNET-Seq signal (WT vs Cold 3h vs Cold 12h) at casTSS on the antisense strand (Fig. 5b);
+# TSS-Seq signal (WT vs hen2-2) at casTSS on the antisense strand (Fig. 3e);
 
 # Extract all AS transcripts (either start within the host gene, or at least overlap its 3' end):
 as <- subset(grohmm_novel, over_AS & N_over_AS == 1 & !Subint)
@@ -320,28 +304,27 @@ windows_filt <- windows_fw[no_overlap] # n = 1404
 # Draw metagene plots:
 xlab = "1Kb windows centered at convergent transcript start"
 
-cases <- list("Nucleosome density" = list("nucl_data", FALSE),
-              "TSS-Seq WT hen2" = list("tss_data", TRUE),
-              "PlaNET-Seq WT Cold" = list("planet_data[1:3]", TRUE),
-              "pNET-Seq" = list("pnet_data", TRUE))
+cases <- list("Nucleosome density" = list("nucl_data", FALSE), # Fig. S3b
+              "TSS-Seq WT hen2" = list("tss_data", TRUE), # Fig. 3e
+              "PlaNET-Seq WT Cold" = list("planet_data[1:3]", TRUE)) # Fig. 5b
 
 for (i in seq_along(cases)) {
   curr_name <- names(cases)[[i]]
   curr_data <- eval(parse(text = cases[[i]][[1]]))
-  curr_as <- cases[[i]][[2]] # antisenseMode parameter for metageneMatrix() function (TRUE/FALSE) 
-  matlist_s <- lapply(curr_data, metageneMatrix, intervals = windows_filt, scaling = TRUE, matrix.length = 200, skip.zeros = FALSE)
-  drawMetagenePlot(matlist_s, x.axis = seq(-99, 100), vline = 0, title = paste0("Convergent transcripts - ", curr_name, " (Fw)"), 
-                   xlabel = xlab, width = 8, height = 8, units = "in")
+  curr_as <- cases[[i]][[2]] # antisenseMode parameter for metageneMatrix() function (TRUE/FALSE)
+  matlist <- lapply(curr_data, metageneMatrix, intervals = windows_filt, scaling = TRUE, matrix.length = 200, skip.zeros = FALSE, antisenseMode = curr_as)
   if (isTRUE(curr_as)) {
-    matlist_as <- lapply(curr_data, metageneMatrix, intervals = windows_filt, scaling = TRUE, matrix.length = 200, skip.zeros = FALSE, antisenseMode = TRUE)
-    matlist_as <- lapply(matlist_as, function(mat) { return(-mat) })
-    drawMetagenePlot(matlist_as, x.axis = seq(-99, 100), vline = 0, title = paste0("Convergent transcripts - ", curr_name, " (Rev)"), 
-                     xlabel = xlab, width = 8, height = 8, units = "in", hline = 0)
+    suffix <- " (AS strand)"
+    matlist <- lapply(matlist, function(mat) { return(-mat) })
+  } else {
+    suffix <- ""
   }
+  drawMetagenePlot(matlist, x.axis = seq(-99, 100), vline = 0, title = paste0("Convergent transcripts - ", curr_name, suffix), 
+                   xlabel = xlab, width = 8, height = 8, units = "in")
 }
 
 
-########## THE DISTRIBUTION OF CHROMATIN SEGMENTS ALONG PROTEIN-CODING GENES (FIG. S6E) ##########
+########## THE DISTRIBUTION OF CHROMATIN SEGMENTS ALONG PROTEIN-CODING GENES (FIG. S3c) ##########
 
 # Load chromatin states from PCSD database combined into 5 biologically relevant gene segments:
 segments <- readRDS("PCSD_gene_segments.RDS") # this file was generated in the 06-groHMM_pipeline.R
@@ -375,5 +358,5 @@ for (i in seq_along(matlist)) {
 }
 
 # Draw the plot:
-drawMetagenePlot(matlist, title = "PCSD segments in nuclear protein-coding genes FPKM1 1-5Kb (n = 10291)", x.axis = seq(-49, 350), vline = c(0, 300), 
+drawMetagenePlot(matlist, title = "PCSD segments in nuclear protein-coding genes FPKM1 1-5Kb (n = 10291) (Fig. S3c)", x.axis = seq(-49, 350), vline = c(0, 300), 
                  xlabel = "[TSS, TTS] scaled to 300 bins with 250 bp flanks", width = 8, height = 8, units = "in")

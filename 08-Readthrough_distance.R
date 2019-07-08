@@ -2,7 +2,7 @@
 # Technically, it uses the sliding window approach and a statistical model which takes into account the variability of plaNET-Seq tag density in both the gene of interest and the intergenic intervals;
 # The RT tail was considered to extend from PAS to the position of the sliding window where the likelihood of observing at most this tag count under the "genic" model 
 # for the first time drops below the likelihood of observing at least this tag count under the "intergenic" model;
-# This file also contains the code required to reproduce Fig.2D;
+# This file also contains the code required to reproduce Fig. 8d;
 
 library(rtracklayer)
 library(SummarizedExperiment)
@@ -119,7 +119,7 @@ for (i in seq_along(planet_data)) {
   export(mcols(genes_chosen)[, paste0("RT_", name)], paste0("RT_", name, ".bed"), format = "BED")
 }
 
-# Fig. 2D (boxplot of RT length in WT vs Cold_3h vs Cold_12h samples):
+# Fig. 8d (boxplot of RT length in WT vs Cold_3h vs Cold_12h samples):
 df1 <- data.frame("Readthrough" = width(mcols(genes_chosen)$RT_WT), "Sample" = "WT")
 df2 <- data.frame("Readthrough" = width(mcols(genes_chosen)$RT_Cold_3h), "Sample" = "Cold_3h")
 df3 <- data.frame("Readthrough" = width(mcols(genes_chosen)$RT_Cold_12h), "Sample" = "Cold_12h")
@@ -127,7 +127,7 @@ df_rt <- rbind(df1, df2, df3)
 stats <- as.list(tapply(df_rt$Readthrough, df_rt$Sample, boxplot.stats))
 ymax <- max(unlist(lapply(stats, function(x) { return(x[[1]][[5]]) })))
 ymeds <- unlist(lapply(stats, function(x) { return(x[[1]][[3]]) }))
-filename <- paste0("RT length (WT vs Cold_3h vs Cold_12h)")
+filename <- paste0("RT length in WT vs Cold_3h vs Cold_12h (Fig. 8d)")
 p <- ggplot(df_rt, aes(x = Sample, y = Readthrough)) + geom_boxplot(outlier.shape = NA) + ggtitle(filename) + 
   coord_cartesian(ylim = c(0, ymax)) + geom_hline(yintercept = ymeds[[1]], linetype = "dashed")
 for (ext in c("png", "pdf")) {

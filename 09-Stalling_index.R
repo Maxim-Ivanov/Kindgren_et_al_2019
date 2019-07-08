@@ -1,5 +1,5 @@
 # The script below was used to compute both the promoter-proximal stalling index (TSS SI) and the intronic stalling index (ISI);
-# This file also contains the code to reproduce figures 2B and S4D;
+# This file also contains the code to reproduce figures 8b and S6c;
 
 ##### PART 1: promoter-proximal stalling index (TSS SI) #####
 
@@ -23,10 +23,10 @@ r_dir <- "." # change to the folder where you saved the custom functions from ht
 scripts <- c("getOverlappingScores.R", "windowsFromGRanges.R", "findBestWindow.R", "normalizeGR.R")
 for (script in scripts) { source(file.path(r_dir, script)) }
 
-genes_araport_adj <- readRDS("genes_araport_adj.RDS")
+genes_araport_adj <- readRDS("genes_araport_adj.RDS") # see 04-Adjustment_Araport11.R
 genes_npcd <- genes_araport_adj[mcols(genes_araport_adj)$tx_type == "mRNA" & seqnames(genes_araport_adj) %in% 1:5]
 
-txdb_araport <- makeTxDbFromGFF("Araport11_GFF3_genes_transposons.201606.gff.gz")
+txdb_araport <- makeTxDbFromGFF("Araport11_GFF3_genes_transposons.201606.gff.gz") # https://www.arabidopsis.org/download_files/Genes/Araport11_genome_release/Araport11_GFF3_genes_transposons.201606.gff.gz
 ebg_araport <- exonsBy(txdb_araport, by = "gene") # exons grouped by gene
 seqinfo(ebg_araport, new2old = as.integer(c(1:5, 7, 6))) <- seqinfo(genes_araport_adj)
 
@@ -81,12 +81,6 @@ tss_si[is.infinite(tss_si)] <- 0
 colnames(tss_si) <- sub("plaNET", "TSS_SI", colnames(tss_si))
 tss_si <- round(tss_si, 3)
 
-# Add TSS PI data (and also plaNET FPKM values) to genes3_good and save for future use:
-genes3_good_TSS_PI <- genes3_good
-mcols(genes3_good_TSS_PI) <- cbind(mcols(genes3_good_TSS_PI), tss_pi, genes3_fpkm[good, ])
-saveRDS(genes3_good_TSS_PI, "genes3_good_TSS_PI.RDS")
-write.table(genes3_good_TSS_PI, "genes3_good_TSS_PI.txt", sep = "\t", quote = FALSE, row.names = FALSE)
-
 # Combine TSS SI results with the DE data:
 mc <- mcols(genes_good)
 mc_de <- mc[, grepl("_de", colnames(mc))]
@@ -96,10 +90,10 @@ for (i in grep("_de", colnames(df))) {
   df[, i] <- factor(df[, i], levels = c("No", "Up", "Down"))
 }
 
-# Fig. 2B (boxplot of WT TSS SI in genes which are Up/Down/nonDE in Cold 3h):
+# Fig. 8b (boxplot of WT TSS SI in genes which are Up/Down/nonDE in Cold 3h):
 pi_col <- "TSS_SI_WT"
 de_col <- "Cold_3h_vs_WT_de"
-ttl <- "TSS Stalling Index in WT vs DE status in Cold 3h"
+ttl <- "TSS Stalling Index in WT vs DE status in Cold 3h (Fig. 8b)"
 stats <- tapply(df[, pi_col], df[, de_col], boxplot.stats)
 max_y <- max(unlist(lapply(stats, function(x) { return(x[[1]][[5]]) })))
 med <- median(df[df[, de_col] == "No", pi_col])
@@ -185,8 +179,8 @@ groups[weak] <- "Weak"
 groups <- factor(groups, levels = c("Weak", "Medium", "Strong"))
 mcols(introns_good)$groups <- groups
 
-# Fig. S4D (boxplot of intron lengths grouped by the ISI):
+# Fig. S6c (boxplot of intron lengths grouped by the ISI):
 df <- data.frame("Width" = width(introns_good), "Group" = groups)
-ttl <- "Intron width vs ISI"
+ttl <- "Intron width vs ISI (Fig. S6c)"
 p <- ggplot(df, aes(x = Group, y = Width, fill = Group)) + geom_boxplot() + ggtitle(ttl)
 for (ext in c(".pdf", ".png")) { suppressWarnings(ggsave(paste0(ttl, ext), plot = p, width = 7, height = 7, units = "in")) }

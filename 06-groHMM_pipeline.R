@@ -1,5 +1,5 @@
 # This script describes how transcripts were called de novo from the plaNET-Seq data;
-# It also allows to reproduce Figures 5B, 5D, 5E, 6B, 7B, 7D, S6B, S6C, S6G; 
+# It also allows to reproduce Figures 1d, 2d, 3a, 3c, 3d, S3a, S3d; 
 
 library(groHMM)
 options(mc.cores=getCores(4))
@@ -254,7 +254,7 @@ mcols(novel)$Subint <- skipSubintervals(novel) # FALSE for intervals which are n
 export(novel, "Novel_groHMM_transcripts.bed", format = "BED")
 saveRDS(novel, "Novel_groHMM_transcripts.RDS")
 
-##### Fig. 5B: classification of novel transcripts and known genes #####
+##### Fig. 1d: classification of novel transcripts and known genes #####
 
 # Classify each transcript as "Genic" (strong overlap with any known gene on the same strand), 
 # "Upstream" (weak overlap with 5' end of a known gene),
@@ -312,7 +312,7 @@ df3 <- subset(df3, Type != "Genic")
 df3$Type <- factor(df3$Type, levels = c("Up", "Down", "Divergent", "Convergent", "TTS_AS", "Distal_AS", "Intergenic"))
 df3$Group <- factor(df3$Group, levels = c("Novel", "Known"))
 p2 <- ggplot(df3, aes(x = Type, y = Count, fill = Group)) + geom_bar(stat = "identity") + geom_text(aes(label = Count), position = position_stack(vjust = 0.5), size = 3)
-for (ext in c(".pdf", ".png")) { ggsave(paste0("Novel and known ncRNA classification", ext), plot = 2, width = 7, height = 7, units = "in") }
+for (ext in c(".pdf", ".png")) { ggsave(paste0("Novel and known ncRNA classification (Fig. 1d)", ext), plot = 2, width = 7, height = 7, units = "in") }
 
 
 ##### ANALYSIS OF DIVERGENT NOVEL TRANSCRIPTS #####
@@ -331,20 +331,20 @@ dupl <- duplicated(names(mate_genes))
 dnc <- dnc[!dupl]
 mate_genes <- mate_genes[!dupl]
 
-# Fig. 5D: histogram/density of abs. distances between divTSS and coding TSS:
+# Fig. 2b: histogram/density of abs. distances between divTSS and coding TSS:
 dist <- width(pgap(dnc, mate_genes3, ignore.strand = TRUE))
 df1 <- data.frame("Dist" = dist)
 p1 <- ggplot(df1, aes(x = Dist, y = ..density..)) + geom_histogram(bins = 30) + geom_density(colour = "red") + xlab("Distance, bp") + ggtitle("Absolute distance to TSS of the mate gene")
-for (ext in c(".png", ".pdf")) { ggsave(paste0("Distance to the mate gene", ext), plot = p1, width = 6, height = 6) }
+for (ext in c(".png", ".pdf")) { ggsave(paste0("Distance to the mate gene (Fig. 2b)", ext), plot = p1, width = 6, height = 6) }
 
-# Fig. 6B: Boxplot of plaNET-Seq FPKM (WT sample) in DNC vs non-DNC genes:
+# Fig. 2d: Boxplot of plaNET-Seq FPKM (WT sample) in DNC vs non-DNC genes:
 genes_npcd_fpkm <- as.numeric(getOverlappingScores(genes_npcd, planet_data[1], value = "count_matrix")) / width(genes_npcd) * 1000
 silent <- genes_npcd_fpkm < 1
 df2 <- data.frame("Expr" = genes_npcd_fpkm, "Group" = ifelse(names(genes_npcd) %in% names(mate_genes), "With_DNC", "Without_DNC"), "Silent" = silent)
 df2_expr <- subset(df2, !Silent)
 df2_expr$Expr <- log2(df2_expr$Expr)
 p2 <- ggplot(df2_expr, aes(x = Group, y = Expr)) + geom_boxplot() + ylab("Log2 FPKM") + ggtitle("Expressed genes (plaNET-Seq WT FPKM >= 1)")
-for (ext in c(".png", ".pdf")) { ggsave(paste0("Expression of genes with vs without DNC", ext), plot = p2, width = 6, height = 6) }
+for (ext in c(".png", ".pdf")) { ggsave(paste0("Expression of genes with vs without DNC (Fig. 2d)", ext), plot = p2, width = 6, height = 6) }
 # Mann-Whitney p-value:
 wilcox.test(x = df2_expr[df2_expr$Group == "With_DNC", "Expr"], y = df2_expr[df2_expr$Group == "Without_DNC", "Expr"])$p.value # 5.798428e-23
 sum(df2_expr$Group == "With_DNC") # n = 711
@@ -371,23 +371,23 @@ host_genes <- host_genes[mcols(as)$rel_pos <= 1.2]
 # Classify AS transcripts as "convergent" and "TSS-AS":
 mcols(as)$category <- ifelse(mcols(as)$rel_pos <= 0.5, "Convergent", "TSS_AS")
 
-### Fig. 5E (histogram of relative distances between AS TSS and coding TSS):
+### Fig. 3a (histogram of relative distances between AS TSS and coding TSS):
 df1 <- data.frame("Relative_position" = mcols(as)$rel_pos)
 p <- ggplot(df1, aes(x = Relative_position)) + geom_histogram(breaks = seq(0, 1.2, by = 0.1), fill = "grey70") + geom_vline(xintercept = 1, colour = "black") + theme_bw()
-title <- "Distribution of AS TSS along their host genes"
+title <- "Distribution of AS TSS along their host genes (Fig. 3a)"
 for (extension in c(".png", ".pdf")) {
   ggsave(paste0(title, extension), plot = p, width = 6, height = 5, units = "in")
 }
 
-#Fig. S6B: histogram of distances between casTSS and coding TSS (2019-03-04)
+#Fig. S3a (histogram of distances between casTSS and coding TSS):
 df2 <- data.frame("Absolute_position" = mcols(as)$abs_pos)
-title <- "Absolute distances between AS TSS and coding TSS"
+title <- "Absolute distances between AS TSS and coding TSS (Fig. S3a)"
 p <- ggplot(df2, aes(x = Absolute_position)) + geom_histogram(bins = 100) + ggtite(title)
 for (extension in c(".png", ".pdf")) {
   ggsave(paste0(title, extension), plot = p, width = 6, height = 5, units = "in")
 }
 
-### Fig. 7B (histogram of distances between casTSS and 1st/2nd exon end):
+### Fig. 3c (histogram of distances between casTSS and 1st/2nd exon end):
 # Consider only convergent AS transcripts and their hist genes:
 conv <- mcols(as)$category == "Convergent"
 as_conv <- as[conv]
@@ -416,7 +416,7 @@ second_exons_par <- second_exons[df$idx_second]
 # Plot histogram of distances between casTSS and end of the first exon:
 first_exon_gap <- pgap(as_flipped_tss_conv_ex, resize(first_exons_par, 1, "end"))
 abs_from_first_exon <- ifelse(poverlapsGRanges(flank(first_exon_gap, 1), as_flipped_tss_conv_ex) & width(first_exon_gap) > 0, -width(first_exon_gap), width(first_exon_gap))
-ttl <- "Absolute distance between casTSS and end of the first exon"
+ttl <- "Absolute distance between casTSS and end of the first exon (Fig. S3c - left panel)"
 p <- ggplot(data.frame("Dist" = abs_from_first_exon), aes(x = Dist)) + geom_histogram(bins = 100) + 
   ggtitle(ttl) + xlab("Distance from exon end, bp") + ylab("Number of transcripts")
 for (ext in c("pdf", "png")) {
@@ -425,44 +425,15 @@ for (ext in c("pdf", "png")) {
 # Plot histogram of distances between casTSS and end of the second exon:
 second_exon_gap <- pgap(as_flipped_tss_conv_ex, resize(second_exons_par, 1, "end"))
 abs_from_second_exon <- ifelse(poverlapsGRanges(flank(second_exon_gap, 1), as_flipped_tss_conv_ex) & width(second_exon_gap) > 0, -width(second_exon_gap), width(second_exon_gap))
-ttl <- "Absolute distance between casTSS and end of the second exon"
+ttl <- "Absolute distance between casTSS and end of the second exon (Fig. S3c - right panel)"
 p <- ggplot(data.frame("Dist" = abs_from_second_exon), aes(x = Dist)) + geom_histogram(bins = 100) + 
   ggtitle(ttl) + xlab("Distance from exon end, bp") + ylab("Number of transcripts")
 for (ext in c("pdf", "png")) {
   ggsave(paste(ttl, ext, sep = "."), plot = p, width = 7, height = 7, units = "in")
 }
 
-### Fig. S6C (nucleosome count between casTTT and coding TSS:
-# Load nucleosome positions (PlantDHS):
-nps <- read.table("Ath_leaf_NPS.gff", sep = "\t", header = FALSE) # download from http://plantdhs.org/static/download/Ath_leaf_NPS.gff.gz
-nps <- GRanges(seqnames=sub("Chr", "", nps$V1), ranges=IRanges(nps$V4, end=nps$V5), seqinfo=seqinfo(genes_araport_adj))
-nps_c <- resize(nps, width = 1, fix = "center") # centers of nucleosomes
-# Enumerate all nucleosomes:
-hits2 <- findOverlaps(genes_araport_adj, nps_c)
-genes_p <- genes_araport_adj[queryHits(hits2)]
-nps_p <- nps_c[subjectHits(hits2)]
-strand(nps_p) <- strand(genes_p)
-rlen <- runLength(Rle(queryHits(hits2)))
-enum_fw <- unlist(sapply(rlen, function(x) { seq(1, x) }))
-enum_rev <- unlist(sapply(rlen, function(x) { seq(x, 1) }))
-mcols(nps_p)$enum <- ifelse(strand(nps_p) == "+", enum_fw, enum_rev)
-mcols(nps_p)$gene_id <- names(genes_p)
-# Find the nucleosomes between coding TSS and casTSS (can be multiple hits if a nucleosome was shared between 2 or more genes):
-names(as_flipped_tss_conv) <- names(host_genes_conv)
-mcols(as_flipped_tss_conv) <- NULL
-hits_up <- follow(as_flipped_tss_conv, nps_p, select = "all")
-conv_up <- as_flipped_tss_conv[queryHits(hits_up)]
-nps_up <- nps_p[subjectHits(hits_up)]
-valid_up <- names(conv_up) == mcols(nps_up)$gene_id
-nums_up <- mcols(nps_up)$enum[valid_up]
-# Draw the figure:
-ttl <- "Convergent transcripts - Upstream nucleosomes count"
-pdf(paste0(ttl, ".pdf"))
-plot(table(nums_up), xlab = "Upstream nucleosomes count", ylab = "Number of transcripts"); dev.off()
-png(paste0(ttl, ".png"))
-plot(table(nums_up), xlab = "Upstream nucleosomes count", ylab = "Number of transcripts"); dev.off()
 
-### Fig. S6G (boxplot of FPKM values in CAS host genes vs other genes:
+### Fig. 3d (boxplot of FPKM values in CAS host genes vs other genes:
 # Count plaNET-Seq tags on all genes:
 genes_fpkm_wt <- round(getOverlappingScores(genes_araport_adj, planet_data_norm1M[1], value = "count_matrix")/ width(genes_araport_adj) * 1000, 6)
 mcols(genes_araport_adj)$FPKM_plaNET_WT <- as.numeric(genes_fpkm_wt)
@@ -474,12 +445,12 @@ mcols(genes_expr)$host_conv <- mcols(genes_expr)$gene_id %in% mcols(host_genes_c
 df <- data.frame("Expression" = log2(mcols(genes_expr)$FPKM_plaNET_WT), "Group" = ifelse(mcols(genes_expr)$host_conv, "With conv", "Without conv"))
 p <- ggplot(df, aes(x = Group, y = Expression)) + geom_boxplot() + ylab("Log2 FPKM") + ggtitle("Expressed genes (plaNET-Seq WT FPKM >= 1)")
 for (ext in c("pdf", "png")) {
-  ggsave(paste("Expression levels of genes with or without convergent transcripts", ext, sep = "."), plot = p, width = 6, height = 6, units = "in")
+  ggsave(paste("Expression levels of genes with or without convergent transcripts (Fig. 3d)", ext, sep = "."), plot = p, width = 6, height = 6, units = "in")
 }
 # Mann-Whitney p-value:
 wilcox.test(x = df[df$Group == "With conv", "Expression"], y = df[df$Group == "Without conv", "Expression"])$p.value # 5.527256e-38
 
-### Fig. 7D (overlap of casTSS with chromatin states):
+### Fig. S3d (overlap of casTSS with chromatin states):
 # Group ChromHMM states from PCSD database (http://systemsbiology.cau.edu.cn/chromstates/download.php) into 5 chromatin segments:
 bed_dir <- "." # change to your directory with BED files downloaded from PCSD
 prom_files <- paste0("At_segments_S", c(13, 15:21), ".bed") # transcription initiation
@@ -539,7 +510,7 @@ df2 <- data.frame("Freq" = unname(random_over), "Segments" = names(random_over),
 df <- rbind(df1, df2)
 df$Type <- factor(df$Type, levels = c("Expected", "Observed"))
 df$Segments <- factor(df$Segments, levels = types)
-title <- "Fold enrichment of Convergent TSS in HMM segments"
+title <- "Fold enrichment of Convergent TSS in HMM segments (Fig. S3d)"
 p <- ggplot(df, aes(x = Segments, y = Freq, fill = Type)) + geom_bar(stat = "identity", position = "dodge") + ggtitle(title)
 for (ext in c(".png", ".pdf")) {
   ggsave(paste0(title, ext), plot = p, width = 6, height = 5, units = "in")
