@@ -19,10 +19,11 @@ seqinfo(ebg_araport, new2old = as.integer(c(1:5, 7, 6))) <- seqinfo(genes_arapor
 
 ### Call differential transcription on plaNET-Seq data:
 
-planet_dir <- "." # change to the directory containing merged plaNET-Seq Bedgraph files obtained from 02-Postprocessing_plaNET-Seq.R
-planet_files <- list.files(planet_dir, pattern = "merged_fw_rev.bedgraph.gz$")
+planet_dir <- "." # change to the directory containing plaNET-Seq Bedgraph files obtained from 02-Postprocessing_plaNET-Seq.R
+planet_files <- list.files(planet_dir, pattern = "biorep.*fw_rev.bedgraph.gz$")
+# (check the number and order of elements in <planet_files>. Ensure that it fits the <coldata> dataframe created below. Subset and/or reorder <planet_files> if necessary)
 planet_data <- batchReadTrackData(planet_files, dir = planet_dir, format = "bedGraph", seqinfo = seqinfo(genes_araport_adj))
-names(planet_data) <- paste0("plaNET_", sub("_merged_fw_rev.bedgraph.gz", "", names(planet_data)))
+names(planet_data) <- paste0("plaNET_", sub("_fw_rev.bedgraph.gz", "", names(planet_data)))
 
 genes_cm <- getOverlappingScores(genes_araport_adj, planet_data, value = "count_matrix")
 novel_cm <- getOverlappingScores(novel, planet_data, value = "count_matrix")
@@ -44,7 +45,7 @@ deseq_pipeline <- function(se, lfc = 1, pval = 0.05) {
     first <- contrasts[[i]][[1]]
     second <- contrasts[[i]][[2]]
     res <- results(dds, contrast = c("Sample", first, second))
-    res <- lfcShrink(dds, contrast = c("Sample", first, second), res = res)
+    res <- lfcShrink(dds, contrast = c("Sample", first, second), res = res, type = "ashr")
     res_out <- res[c("log2FoldChange", "padj")]
     res_out$de <- "No"
     res_out$de[res_out$log2FoldChange >= lfc & res_out$padj <= pval] <- "Up"
@@ -110,8 +111,8 @@ long_df$Contrast <- factor(long_df$Contrast)
 long_df$DE <- factor(long_df$DE)
 
 ttl <- "Exon counts in DE genes (Fig. S5b)"
-p <- ggplot(long_df, aes(x = Exon_count, y = N_genes, fill = DE)) + 
-  geom_bar(stat = "identity", position = position_dodge(0.7), width = 0.5) + 
+p <- ggplot(long_df, aes(x = Exon_count, y = N_genes, fill = DE)) +
+  geom_bar(stat = "identity", position = position_dodge(0.7), width = 0.5) +
   facet_grid(Contrast ~ .) + ggtitle(ttl)
 for (ext in c(".png", ".pdf")) {
   ggsave(paste0(ttl, ext), plot = p, width = 6, height = 10, units = "in")
