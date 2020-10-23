@@ -45,7 +45,7 @@ deseq_pipeline <- function(se, lfc = 1, pval = 0.05) {
     first <- contrasts[[i]][[1]]
     second <- contrasts[[i]][[2]]
     res <- results(dds, contrast = c("Sample", first, second))
-    res <- lfcShrink(dds, contrast = c("Sample", first, second), res = res, type = "ashr")
+    res <- lfcShrink(dds, contrast = c("Sample", first, second), res = res, type = "normal")
     res_out <- res[c("log2FoldChange", "padj")]
     res_out$de <- "No"
     res_out$de[res_out$log2FoldChange >= lfc & res_out$padj <= pval] <- "Up"
