@@ -13,7 +13,7 @@ for (script in scripts) { source(file.path(r_dir, script)) }
 
 ### 1) Call TSS clusters in wild type Col-0 (samples GSM3369630	and GSM3369631 from study GSE119304; Kindgren at al., 2018 - PMID 30385760):
 # Load TSS-Seq hen2-2 data:
-tss_dir <- "." # change to the directory where you downloaded BigWig files for samples GSM3369630	and GSM3369631
+tss_dir <- "." # change to the directory where you downloaded BigWig files for samples GSM3369630 and GSM3369631
 tss_data_fw <- batchReadTrackData(list.files(tss_dir, pattern = "Plus.bw$"), dir = tss_dir, format = "BigWig")
 strand(tss_data_fw) <- "+"
 tss_data_rev <- batchReadTrackData(list.files(tss_dir, pattern = "Minus.bw$"), dir = tss_dir, format = "BigWig")
@@ -59,7 +59,7 @@ saveRDS(tss, "TSS_clusters_WT.RDS") # (this file is used in 04-Adjustment_Arapor
 
 # Load Bedgraph files:
 bg_dir <- "." # change to the directory containing DR-Seq Bedgraph files returned by 03-Alignment_GRO-Seq_RNA-Seq_DR-Seq.sh
-bg_filenames <- list.files(bg_dir, pattern = "fw_rev.bedgraph.gz$")
+bg_filenames <- c(list.files(bg_dir, pattern = "DRseq_Schurch2014_rep._fw_rev\\.bedgraph\\.gz$"), "DRseq_Sherstnev2012_merged_fw_rev.bedgraph.gz")
 pas_data <- batchReadTrackData(file.path(bg_dir, bg_files), format = "bedGraph", seqinfo = seqinfo(txdb))
 # Filter by minimal coverage:
 pas_data <- lapply(pas_data, function(gr) { return(gr[score(gr) >= 2]) })

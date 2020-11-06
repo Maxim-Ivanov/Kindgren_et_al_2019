@@ -44,7 +44,7 @@ pnet_data <- endoapply(pnet_data, normalizeGR, by = genes_npcd_m)
 
 # Load and normalize the remapped GRO-Seq data (merged replicates; see 03-Alignment_GRO-Seq_RNA-Seq_DR-Seq):
 gro_dir <- "." # change to the relevant directory
-gro_files <- list("GRO_Liu2018_nrpd1e1_merged_fw_rev.bedgraph.gz", "GRO_Zhu2018_merged_fw_rev.bedgraph.gz")
+gro_files <- list.files(gro_dir, pattern = "GROseq.*merged_fw_rev.bedgraph.gz")
 gro_data <- batchReadTrackData(gro_files, dir = gro_dir, format = "bedGraph", seqinfo = seqinfo(genes_araport_adj))
 names(gro_data) <- sub("_merged_fw_rev.bedgraph.gz", "", names(gro_data))
 gro_data <- endoapply(gro_data, normalizeGR, by = genes_npcd_m)
