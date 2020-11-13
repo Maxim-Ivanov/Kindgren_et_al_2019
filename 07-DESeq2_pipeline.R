@@ -86,10 +86,10 @@ de_cols <- all_cols[grepl("_de", all_cols)]
 res <- vector("list", length(de_cols) * 3)
 for (i in seq_along(de_cols)) {
   de_col <- de_cols[[i]]
-  decisions <- mcols(genes3_pcd)[, de_col]
+  decisions <- mcols(genes_pcd)[, de_col]
   for (j in 1:3) {
     tag <- c("Up", "Down", "No")[[j]]
-    gene_names <- names(genes3_pcd)[decisions == tag]
+    gene_names <- names(genes_pcd)[decisions == tag]
     exon_counts <- lengths(ebg[names(ebg) %in% gene_names])
     report <- vector("integer", 11)
     for (k in 1:10) {
@@ -173,6 +173,6 @@ tss_deseq_pipeline <- function(se) {
 genes_tss_decisions <- tss_deseq_pipeline(genes_tss_se)
 
 # Fig. 4c (comparison of DE decisions for the same genes on plaNET-Seq vs TSS-Seq data):
-table(mcols(genes_de)$Cold_3h_vs_WT_de, genes3_tss_decisions)
+table(mcols(genes_de)$Cold_3h_vs_WT_de, genes_tss_decisions)
 
 

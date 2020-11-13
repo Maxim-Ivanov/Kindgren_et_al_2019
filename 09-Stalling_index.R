@@ -36,8 +36,8 @@ seqlevels(bsgen) <- seqlevels(genes_araport_adj)
 
 # Load plaNET-Seq DE data:
 genes_de <- readRDS("genes_de.RDS") # see 07-DESeq2_pipeline.R
-genes_de_gr <- rowRanges(genes3_de)
-genes_cm <- assay(genes3_de)
+genes_de_gr <- rowRanges(genes_de)
+genes_cm <- assay(genes_de)
 
 # Load plaNET-Seq data (normalized to 1M tags in nuclear protein-coding genes):
 planet_data <- readRDS("PlaNET-Seq_data_norm1M.RDS") # see 05-Metagenes.R

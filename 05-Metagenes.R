@@ -333,7 +333,7 @@ segments <- readRDS("PCSD_gene_segments.RDS") # this file was generated in the 0
 genes_npcd_ext_1kb <- suppressWarnings(trim(resize(genes_npcd, width(genes_npcd) + 1000, "center")))
 no_over <- countOverlaps(genes_npcd_ext_1Kb, genes_araport_adj) == 1
 # Choose nuclear protein-coding expressed above 1 FPKM (based on plaNET-Seq WT data) and having length 1-5 Kb:
-genes_good <- genes3_npcd[no_over & genes_npcd_fpkm >= 1 & width(genes_npcd) >= 1000 & width(genes_npcd) <= 5000] # n = 10291
+genes_good <- genes_npcd[no_over & genes_npcd_fpkm >= 1 & width(genes_npcd) >= 1000 & width(genes_npcd) <= 5000] # n = 10291
 
 # Make "0-1" tracks from HMM segments (the presence of a segment is denoted by interval with score 1):
 segm_names <- c("Prom", "Prom2Early", "Early", "Late", "pA")

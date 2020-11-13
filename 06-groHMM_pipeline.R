@@ -332,7 +332,7 @@ dnc <- dnc[!dupl]
 mate_genes <- mate_genes[!dupl]
 
 # Fig. 2b: histogram/density of abs. distances between divTSS and coding TSS:
-dist <- width(pgap(dnc, mate_genes3, ignore.strand = TRUE))
+dist <- width(pgap(dnc, mate_genes, ignore.strand = TRUE))
 df1 <- data.frame("Dist" = dist)
 p1 <- ggplot(df1, aes(x = Dist, y = ..density..)) + geom_histogram(bins = 30) + geom_density(colour = "red") + xlab("Distance, bp") + ggtitle("Absolute distance to TSS of the mate gene")
 for (ext in c(".png", ".pdf")) { ggsave(paste0("Distance to the mate gene (Fig. 2b)", ext), plot = p1, width = 6, height = 6) }
