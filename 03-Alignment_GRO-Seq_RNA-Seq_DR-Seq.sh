@@ -15,7 +15,7 @@
 
 
 # Download paired-end FASTQ files from Liu et al., 2018:
-echo "SRR5681055\tGROseq_Liu2018_rep1\nSRR5681056\tGROseq_Liu2018_rep2\n" > GROseq_Liu2018.txt
+echo -e "SRR5681055\tGROseq_Liu2018_rep1\nSRR5681056\tGROseq_Liu2018_rep2\n" > GROseq_Liu2018.txt
 
 while IFS="\t" read -r line || [[ -n "$line" ]]; do acc="$(cut -f1 <<< $line)" && fname="$(cut -f2 <<< $line)" && echo $acc "->" $fname && fastq-dump --gzip --split-files $acc && mv ${acc}_1.fastq.gz ${fname}_R1.fq.gz && mv ${acc}_2.fastq.gz ${fname}_R2.fq.gz; done < GROseq_Liu2018.txt
 
@@ -24,7 +24,7 @@ rm GROseq_Liu2018*_R2.fq.gz
 for file in GROseq_Liu2018*_R1.fq.gz; do mv $file ${file/_R1/}; done
 
 # Download single-end FASTQ files from Zhu et al., 2018:
-echo "SRR6661079\tGROseq_Zhu2018_rep1\nSRR6661080\tGROseq_Zhu2018_rep2\n" > GROseq_Zhu2018.txt
+echo -e "SRR6661079\tGROseq_Zhu2018_rep1\nSRR6661080\tGROseq_Zhu2018_rep2\n" > GROseq_Zhu2018.txt
 
 while IFS="\t" read -r line || [[ -n "$line" ]]; do acc="$(cut -f1 <<< $line)" && fname="$(cut -f2 <<< $line)" && echo $acc "->" $fname && fastq-dump --gzip $acc && mv ${acc}.fastq.gz ${fname}.fq.gz; done < GROseq_Zhu2018.txt
 
@@ -60,7 +60,7 @@ for file in *bedgraph; do echo $file && gzip $file; done
 # The best proxy for Col-0 seedlings are samples GSM2144569 and GSM2144571 (TP0 white light cotyledon);
 
 # Download single-end FASTQ files:
-echo "SRR3480142\tRNAseq_Kohnen2016_rep1\nSRR3480144\tRNAseq_Kohnen2016_rep2\n" > RNAseq_Kohnen2016.txt
+echo -e "SRR3480142\tRNAseq_Kohnen2016_rep1\nSRR3480144\tRNAseq_Kohnen2016_rep2\n" > RNAseq_Kohnen2016.txt
 
 while IFS="\t" read -r line || [[ -n "$line" ]]; do acc="$(cut -f1 <<< $line)" && fname="$(cut -f2 <<< $line)" && echo $acc "->" $fname && fastq-dump --gzip $acc && mv ${acc}.fastq.gz ${fname}.fq.gz; done < RNAseq_Kohnen2016.txt
 
