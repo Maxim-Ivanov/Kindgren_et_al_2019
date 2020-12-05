@@ -44,7 +44,7 @@ genes_wo_pas <- genes_expr[gene_end_ext %outside% pas]
 hits <- findOverlaps(gene_end_ext, pas)
 genes_with_pas <- genes_expr[unique(queryHits(hits))]
 pas_par <- pas[subjectHits(hits)]
-highest_score <- as.logical(unlist(tapply(score(pas_par), queryHits(hits), function(x) { x == max(x) }, simplify = FALSE)))
+highest_score <- as.logical(unlist(tapply(score(pas_par), queryHits(hits), function(x) { out <- vector("logical", length(x)); out[which.max(x)] <- TRUE; return(out) }, simplify = FALSE)))
 best_pas <- pas_par[highest_score]
 
 # Find the gap between PAS of the gene of interest and TSS of the nearest downstream gene;
