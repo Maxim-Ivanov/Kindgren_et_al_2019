@@ -12,7 +12,7 @@ genes_araport_adj <- readRDS("genes_araport_adj.RDS") # see 04-Adjustment_Arapor
 genes_npcd <- genes_araport_adj[mcols(genes_araport_adj)$tx_type == "mRNA" & seqnames(genes_araport_adj) %in% 1:5] # nuclear protein-coding genes
 genes_npcd_ext <- suppressWarnings(trim(resize(genes_npcd, width(genes_npcd) + 100, "end"))) # extend by 100 bp upstream
 genes_npcd_ext <- suppressWarnings(trim(resize(genes_npcd_ext, width(genes_npcd_ext) + 500, "start")))  # extend by 500 bp downstream to capture pA peaks in plaNET-Seq data
-genes_npcd_m <- reduce(genes_npcd_ext) # merge overlapping intervals
+genes_npcd_m <- GenomicRanges::reduce(genes_npcd_ext) # merge overlapping intervals
 
 # Load the original Araport11 annotation:
 txdb_araport <- makeTxDbFromGFF("Araport11_GFF3_genes_transposons.201606.gff.gz") # https://www.arabidopsis.org/download_files/Genes/Araport11_genome_release/Araport11_GFF3_genes_transposons.201606.gff.gz

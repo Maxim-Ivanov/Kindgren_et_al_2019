@@ -97,9 +97,9 @@ win_cov <- sort(c(win_fw_cov, win_rev_cov))
 # Compute intergenic (control) lambda:
 grohmm_all <- readRDS("GroHMM_transcripts_merged_across_samples.RDS") # all transcripts called by groHMM (see 06-groHMM_pipeline.R)
 all_tu <- c(granges(genes_araport_adj), granges(grohmm_all))
-all_tu_ext <- sort(reduce(suppressWarnings(trim(resize(all_tu, width(all_tu) + 2000, "center"))))) # all TU extended by 1Kb each side
+all_tu_ext <- sort(GenomicRanges::reduce(suppressWarnings(trim(resize(all_tu, width(all_tu) + 2000, "center"))))) # all TU extended by 1Kb each side
 whole_genome <- GRanges(seqnames = rep(1:5, 2), ranges = IRanges(start = 1, end = seqlengths(seqinfo(genes_araport_adj))[rep(1:5, 2)]), strand = rep(c("+", "-"), each = 5))
-non_genic <- setdiff(whole_genome, all_tu_ext) # 89 Mb of untranscribed sequences
+non_genic <- GenomicRanges::setdiff(whole_genome, all_tu_ext) # 89 Mb of untranscribed sequences
 win_nongenic <- subsetByOverlaps(win_cov, non_genic, type = "within")
 
 # Compute the RT tails:

@@ -25,8 +25,8 @@ findSpliceSites <- function(ebg) {
   res <- removeFirstAndLastExons(ebg)
   exons_wo_first <- res[[1]]
   exons_wo_last <- res[[2]]
-  ss_5p <- reduce(resize(resize(exons_wo_last, 1, "end"), 3, "center")) # the last base of exon (+ 1 base up  + 1 base down)
-  ss_3p <- reduce(resize(flank(exons_wo_first, 1), 3, "center")) # the last base of the upstream intron (+ 1 base up  + 1 base down)
+  ss_5p <- GenomicRanges::reduce(resize(resize(exons_wo_last, 1, "end"), 3, "center")) # the last base of exon (+ 1 base up  + 1 base down)
+  ss_3p <- GenomicRanges::reduce(resize(flank(exons_wo_first, 1), 3, "center")) # the last base of the upstream intron (+ 1 base up  + 1 base down)
   return(list(ss_5p, ss_3p))
 }
 
@@ -36,8 +36,8 @@ acc_1 <- ss1[[2]]
 ss2 <- findSpliceSites(ebg3)
 donor_2 <- ss2[[1]]
 acc_2 <- ss2[[2]]
-all_donor <- sort(reduce(c(donor_1, donor_2))) # all donor splice sites
-all_acc <- sort(reduce(c(acc_1, acc_2))) # all acceptor splice sites
+all_donor <- sort(GenomicRanges::reduce(c(donor_1, donor_2))) # all donor splice sites
+all_acc <- sort(GenomicRanges::reduce(c(acc_1, acc_2))) # all acceptor splice sites
 
 bamdir <- "." # change to path of your folder which contains the BAM files returned by 01-Alignment_plaNET-Seq.sh
 bamfiles <- list.files(bamdir, pattern = "full.*mapq.bam$")
@@ -85,7 +85,7 @@ mcols(genes)$tx_type <- unname(unlist(mcols(genes)$tx_type))
 genes_npcd <- genes[mcols(genes)$tx_type == "protein_coding" & seqnames(genes) %in% 1:5] # nuclear protein-coding genes in Plantsmart28
 genes_npcd_ext <- suppressWarnings(trim(resize(genes_npcd, width(genes_npcd) + 100, "end")))
 genes_npcd_ext <- suppressWarnings(trim(resize(genes_npcd_ext, width(genes_npcd_ext) + 500, "start")))
-genes_npcd_m <- reduce(genes_npcd_ext)
+genes_npcd_m <- GenomicRanges::reduce(genes_npcd_ext)
 
 data_rep1 <- endoapply(data_rep1, normalizeGR, by = genes_npcd_m) # normalize track to 1M tags in extended nuclear protein-coding genes
 data_rep2 <- endoapply(data_rep2, normalizeGR, by = genes_npcd_m)

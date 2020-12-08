@@ -28,7 +28,7 @@ seqinfo(ebg_araport, new2old = as.integer(c(1:5, 7, 6))) <- seqinfo(genes_arapor
 genes_npcd <- genes_araport_adj[mcols(genes_araport_adj)$tx_type == "mRNA" & seqnames(genes_araport_adj) %in% 1:5] # nuclear protein-coding genes
 genes_npcd_ext <- suppressWarnings(trim(resize(genes_npcd, width(genes_npcd) + 100, "end"))) # extend by 100 bp upstream
 genes_npcd_ext <- suppressWarnings(trim(resize(genes_npcd_ext, width(genes_npcd_ext) + 500, "start")))  # extend by 500 bp downstream to capture pA peaks in plaNET-Seq data
-genes_npcd_m <- reduce(genes_npcd_ext) # merge overlapping intervals
+genes_npcd_m <- GenomicRanges::reduce(genes_npcd_ext) # merge overlapping intervals
 
 # Load plaNET-Seq files (merged biological replicates, raw tag counts):
 planet_dir <- "." # change to the directory containing merged plaNET-Seq Bedgraph files obtained from 02-Postprocessing_plaNET-Seq.R
@@ -401,7 +401,7 @@ as_conv <- as[conv]
 host_genes_conv <- host_genes[conv]
 as_flipped_tss_conv <- as_flipped_tss[conv]
 # Find all first and second exons:
-ebg_red <- reduce(ebg_araport)
+ebg_red <- GenomicRanges::reduce(ebg_araport)
 ebg_red_unl <- unlist(ebg_red)
 enum_fw <- unlist(sapply(lengths(ebg_red), function(x) { seq(1, x) })) # enumerate continuous exonic intervals in both forward and reverse directions
 enum_rev <- unlist(sapply(lengths(ebg_red), function(x) { seq(x, 1) }))
@@ -481,7 +481,7 @@ for (i in seq_along(all_data)) {
     mcols(bed)$name <- NULL
     data[[j]] <- bed
   }
-  gr <- reduce(Reduce(c, data), min.gapwidth = 100)
+  gr <- GenomicRanges::reduce(Reduce(c, data), min.gapwidth = 100)
   mcols(gr)$name <- names(all_data)[[i]]
   mcols(gr)$itemRgb <- colors[[i]]
   all_data[[i]] <- gr
@@ -507,8 +507,8 @@ ctrl <- resize(host_genes_conv, width(host_genes_conv) * 0.5, "start")
 for (i in seq_along(types)) {
   type <- types[[i]]
   gr <- segments[mcols(segments)$name == type]
-  overlap <- sum(width(reduce(GenomicRanges::intersect(gr, ctrl, ignore.strand = TRUE))))
-  overlap_norm <- overlap / sum(width(reduce(ctrl)))
+  overlap <- sum(width(GenomicRanges::reduce(GenomicRanges::intersect(gr, ctrl, ignore.strand = TRUE))))
+  overlap_norm <- overlap / sum(width(GenomicRanges::reduce(ctrl)))
   random_over[[i]] <- overlap_norm
 }
 # Draw barplot showing the observed vs expected frequency of overlaps:
