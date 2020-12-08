@@ -1,6 +1,7 @@
 # This script describes how transcripts were called de novo from the plaNET-Seq data;
 # It also allows to reproduce Figures 1d, 2d, 3a, 3c, 3d, S3a, S3d; 
 
+library(GenomicFeatures)
 library(groHMM)
 options(mc.cores=getCores(4))
 library(dplyr)
@@ -121,9 +122,15 @@ posSamples <- rowSums(as.matrix(mcols(merged)))
 fpkm <- round(getOverlappingScores(merged, planet_data_norm1M, value = "count_matrix") / width(merged) * 1000, 5)
 colnames(fpkm) <- paste0("FPKM_", colnames(fpkm))
 # 3) Mean FPKM in "positive" samples:
-score <- rowMeans(fpkm[as.logical(mcols(merged))])
+use <- as.matrix(mcols(merged)) > 0
+score <- vector("numeric", nrow(fpkm))
+for (i in 1:nrow(fpkm)) {
+  vals <- fpkm[i, ]
+  mask <- use[i, ]
+  score[[i]] <- mean(vals[mask])
+}
 # Add the results to mcols(merged):
-mcols(merged) <- cbind(mcols(merged), data.frame("posSamples" = possamples), as.data.frame(fpkm), data.frame("score" = score))
+mcols(merged) <- cbind(mcols(merged), data.frame("posSamples" = posSamples), as.data.frame(fpkm), data.frame("score" = score))
 
 
 ##### ANNOTATE GROHMM TRANSCRIPTS BY OVERLAP WITH KNOWN GENES IN ARAPORT11 #####
